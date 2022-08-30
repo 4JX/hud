@@ -1,0 +1,37 @@
+[package]
+name = "hud"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+hudsucker = { version = "0.18.0" }
+color-eyre = "0.6.2"
+env_logger = "0.9.0"
+log = "0.4.17"
+rcgen = "0.9.3"
+rustls-pemfile = "1.0.1"
+tokio = { version = "1.20.1", features = [
+    "rt",
+    "macros",
+    "rt-multi-thread",
+    "signal",
+] }
+
+reqwest-impersonate = { path = "../reqwest", default-features = false, features = [
+    "chrome",
+    "blocking",
+] }
+base64 = "0.13.0"
+itertools = "0.10.3"
+# cached = "0.38.0"
+cached = { path = "../cached" }
+thiserror = "1.0.32"
+
+
+[patch.crates-io]
+# hyper = { git = "https://github.com/4JX/hyper.git", branch = "0.14.x-patched", ref = "78b4567" }
+hyper = { path = "../hyper" }
+# h2 = { git = "https://github.com/4JX/h2.git", branch = "test", ref = "75f2434" }
+h2 = { path = "../h2" }
