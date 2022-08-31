@@ -2,33 +2,14 @@ use std::{collections::HashMap, net::SocketAddr};
 
 use error_stack::{IntoReport, Report, Result, ResultExt};
 use hudsucker::{
-    hyper::{Body, Request, Response},
+    hyper::{Body, Request},
     HttpContext,
 };
 use itertools::Itertools;
-use reqwest_impersonate::StatusCode;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 const BASIC_AUTH_PREFIX: &str = "Basic ";
-
-/// Shorthand to create an auth required response
-pub fn res_auth_needed() -> Response<Body> {
-    Response::builder()
-        .status(StatusCode::PROXY_AUTHENTICATION_REQUIRED)
-        .header("Proxy-Authenticate", "Basic")
-        .body(Body::empty())
-        .unwrap()
-}
-
-/// Shorthand to create an auth required response
-pub fn foo() -> Response<Body> {
-    Response::builder()
-        .status(StatusCode::OK)
-        // .header("Proxy-Authenticate", "Basic")
-        .body(Body::empty())
-        .unwrap()
-}
 
 #[derive(Debug, Error)]
 pub enum CreateSessionError {
@@ -83,7 +64,7 @@ pub fn handle_auth(ctx: &HttpContext, req: &Request<Body>) -> Result<Session, Cr
 
 /// Represents an active connection to the proxy that has included correctly formatted information
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Session {
     addr: SocketAddr,
     session_data: SessionData,
@@ -99,12 +80,12 @@ struct SessionDataRaw {
     session_time: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct SessionData {
     customer: String,
     session_id: String,
     country: String,
-    session_time: usize,
+    session_time: u64,
 }
 
 #[derive(Debug, Error)]
@@ -150,7 +131,7 @@ impl Session {
                 session_id: raw.session_id,
                 country: raw.country,
                 session_time: raw_session_time
-                    .parse::<usize>()
+                    .parse::<u64>()
                     .into_report()
                     .attach_printable(format!("Invalid session time {raw_session_time}"))
                     .change_context(ParseAuthError)?,
@@ -175,7 +156,7 @@ impl Session {
         &self.session_data.country
     }
 
-    pub fn session_time(&self) -> usize {
+    pub fn session_time(&self) -> u64 {
         self.session_data.session_time
     }
 
