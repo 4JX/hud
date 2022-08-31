@@ -11,10 +11,7 @@ use reqwest_impersonate::ChromeVersion;
 use rustls_pemfile as pemfile;
 use std::{fs, net::SocketAddr};
 
-use crate::{
-    auth::handle_auth,
-    convert::{request_hud_to_reqwest, response_reqwest_to_hud},
-};
+use crate::{auth::handle_auth, convert::response_reqwest_to_hud};
 
 async fn shutdown_signal() {
     tokio::signal::ctrl_c()
@@ -25,7 +22,6 @@ async fn shutdown_signal() {
 mod auth;
 mod ca;
 mod convert;
-mod util;
 
 #[derive(Clone)]
 struct ProxyHandler;
@@ -46,16 +42,16 @@ impl HttpHandler for ProxyHandler {
                 }
             }
             _ => {
-                let client_imp = reqwest_impersonate::blocking::Client::builder()
+                let client_imp = reqwest_impersonate::Client::builder()
                     .chrome_builder(ChromeVersion::V104)
                     .build()
                     .unwrap();
 
-                let reqwest_req = request_hud_to_reqwest(req).await;
+                let reqwest_req = req.try_into().unwrap();
 
-                let reqwest_res = client_imp.execute(reqwest_req).unwrap();
+                let reqwest_res = client_imp.execute(reqwest_req).await.unwrap();
 
-                let res = response_reqwest_to_hud(reqwest_res);
+                let res = response_reqwest_to_hud(reqwest_res).await;
 
                 RequestOrResponse::Response(res)
             }
@@ -70,7 +66,7 @@ impl HttpHandler for ProxyHandler {
 
 #[tokio::main]
 async fn main() {
-    setup_logging();
+    setup_logging().unwrap();
 
     ca::create_ca_if_not_exist();
 
