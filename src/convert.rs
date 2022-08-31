@@ -2,7 +2,6 @@
 
 use error_stack::{IntoReport, Result, ResultExt};
 use hudsucker::hyper::{Body, Response};
-
 use thiserror::Error;
 
 #[derive(Debug, Error)]

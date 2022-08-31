@@ -53,7 +53,7 @@ pub fn handle_auth(ctx: &HttpContext, req: &Request<Body>) -> Result<Session, Cr
                 let session = Session::new(ctx, auth_header_str)
                     .change_context(CreateSessionError::MalformedHeader)?;
 
-                //TODO: Actually handle auth!
+                // TODO: Actually handle auth!
                 let authorized = true;
                 if authorized {
                     return Ok(session);

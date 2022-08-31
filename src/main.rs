@@ -1,15 +1,14 @@
+use std::{fs, net::SocketAddr};
+
 use hudsucker::{
     async_trait::async_trait,
     certificate_authority::RcgenAuthority,
     hyper::{Body, Request, Response},
     rustls, HttpContext, HttpHandler, Proxy, RequestOrResponse,
 };
-
 use log::{error, warn};
-
 use reqwest_impersonate::{ChromeVersion, Method};
 use rustls_pemfile as pemfile;
-use std::{fs, net::SocketAddr};
 
 use crate::{auth::handle_auth, convert::response_reqwest_to_hud};
 
