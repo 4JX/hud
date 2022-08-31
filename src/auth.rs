@@ -1,23 +1,33 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, num::ParseIntError};
 
 use hudsucker::hyper::{Body, Request, Response};
 use itertools::Itertools;
 use reqwest_impersonate::StatusCode;
+use serde::{Deserialize, Serialize};
 
 const BASIC_AUTH_PREFIX: &str = "Basic ";
 
+/// Shorthand to create an auth required response
+pub(crate) fn res_auth_needed() -> Response<Body> {
+    Response::builder()
+        .status(StatusCode::PROXY_AUTHENTICATION_REQUIRED)
+        .header("Proxy-Authenticate", "Basic")
+        .body(Body::empty())
+        .unwrap()
+}
+
 /// Determines wether the user has used valid credentials
-/// Currently it doesn't do much, of anything, edit to your liking
+/// Currently it doesn't do much of anything, edit to your liking
 pub(crate) fn handle_auth(req: &Request<Body>) -> bool {
-    let auth = req
+    let proxy_auth = req
         .headers()
         .get(hudsucker::hyper::header::PROXY_AUTHORIZATION);
 
-    match auth {
+    match proxy_auth {
         Some(auth) => {
-            let auth_str = auth.to_str().unwrap();
-            if auth_str.starts_with(BASIC_AUTH_PREFIX) {
-                let session = parse_auth(auth_str);
+            let auth_header_str = auth.to_str().unwrap();
+            if auth_header_str.starts_with(BASIC_AUTH_PREFIX) {
+                let session = Session::from_auth_header(auth_header_str);
 
                 //TODO: Actually handle auth!
                 if session.customer() == "user123" && session.password() == "foo" {
@@ -33,84 +43,90 @@ pub(crate) fn handle_auth(req: &Request<Body>) -> bool {
 
 /// Represents an active connection to the proxy that has included correctly formatted information
 #[derive(Debug)]
-struct UserSession {
-    user_values: UserSessionValues,
+struct Session {
+    session_data: SessionData,
     password: String,
 }
 
+#[allow(dead_code)]
+#[derive(Debug, Serialize, Deserialize)]
+struct SessionDataRaw {
+    customer: String,
+    session_id: String,
+    country: String,
+    session_time: String,
+}
+
+impl TryFrom<SessionDataRaw> for SessionData {
+    type Error = ParseIntError;
+
+    fn try_from(value: SessionDataRaw) -> Result<Self, Self::Error> {
+        let SessionDataRaw {
+            customer,
+            session_id,
+            country,
+            session_time,
+        } = value;
+
+        let parsed_session_time = session_time.parse::<usize>()?;
+
+        Ok(SessionData {
+            customer,
+            session_id,
+            country,
+            session_time: parsed_session_time,
+        })
+    }
+}
+
 #[derive(Debug)]
-struct UserSessionValues {
+struct SessionData {
     customer: String,
     session_id: String,
     country: String,
     session_time: usize,
 }
 
-impl UserSession {
-    fn from_parts(values: HashMap<String, String>, password: String) -> Self {
-        UserSession {
-            user_values: UserSessionValues::from_hashmap(values),
-            password,
+#[allow(dead_code)]
+impl Session {
+    /// Creates a new session struct based on the information provided by the Proxy-Authorization header
+    fn from_auth_header(auth_header_str: &str) -> Self {
+        let base64_auth: String = auth_header_str
+            .chars()
+            .skip(BASIC_AUTH_PREFIX.len())
+            .collect();
+        let decoded = base64::decode(base64_auth).unwrap();
+        let creds = std::str::from_utf8(&decoded).unwrap();
+
+        let (username, password) = creds.rsplit_once(':').unwrap();
+        let parsed_values: HashMap<&str, &str> = username.split('-').tuples::<(_, _)>().collect();
+
+        let as_json = serde_json::to_string(&parsed_values).unwrap();
+        let user_values_raw: SessionDataRaw = serde_json::from_str(&as_json).unwrap();
+
+        Session {
+            session_data: user_values_raw.try_into().unwrap(),
+            password: password.to_string(),
         }
     }
 
     fn customer(&self) -> &str {
-        &self.user_values.customer
+        &self.session_data.customer
     }
 
     fn session_id(&self) -> &str {
-        &self.user_values.session_id
+        &self.session_data.session_id
     }
 
     fn country(&self) -> &str {
-        &self.user_values.country
+        &self.session_data.country
     }
 
     fn session_time(&self) -> usize {
-        self.user_values.session_time
+        self.session_data.session_time
     }
 
     fn password(&self) -> &str {
         &self.password
     }
-}
-
-impl UserSessionValues {
-    fn from_hashmap(mut values: HashMap<String, String>) -> Self {
-        let customer = values.remove("customer").unwrap();
-        let session_id = values.remove("session_id").unwrap();
-        let country = values.remove("country").unwrap();
-        let session_time = values
-            .remove("session_time")
-            .unwrap()
-            .parse::<usize>()
-            .unwrap();
-        Self {
-            customer,
-            session_id,
-            country,
-            session_time,
-        }
-    }
-}
-
-fn parse_auth(auth_str: &str) -> UserSession {
-    let base64_auth: String = auth_str.chars().skip(BASIC_AUTH_PREFIX.len()).collect();
-    let decoded = base64::decode(base64_auth).unwrap();
-    let creds = std::str::from_utf8(&decoded).unwrap();
-    let (user, pass) = creds.rsplit_once(':').unwrap();
-    let mut parsed_values: HashMap<String, String> = HashMap::new();
-    for (key, val) in user.split('-').tuples() {
-        parsed_values.insert(key.to_string(), val.to_string());
-    }
-
-    UserSession::from_parts(parsed_values, pass.to_string())
-}
-
-pub(crate) fn res_auth_needed() -> Response<Body> {
-    Response::builder()
-        .status(StatusCode::PROXY_AUTHENTICATION_REQUIRED)
-        .header("Proxy-Authenticate", "Basic")
-        .body(Body::empty())
-        .unwrap()
 }
