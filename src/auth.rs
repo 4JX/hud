@@ -54,8 +54,7 @@ pub fn handle_auth(ctx: &HttpContext, req: &Request<Body>) -> Result<Session, Cr
                     .change_context(CreateSessionError::MalformedHeader)?;
 
                 // TODO: Actually handle auth!
-                let authorized = true;
-                if authorized {
+                if session.customer() == "user123" && session.password() == "foo" {
                     return Ok(session);
                 } else {
                     return Err(Report::new(CreateSessionError::Unauthorized {
@@ -151,27 +150,27 @@ impl Session {
         })
     }
 
-    fn addr(&self) -> &SocketAddr {
+    pub fn addr(&self) -> &SocketAddr {
         &self.addr
     }
 
-    fn customer(&self) -> &str {
+    pub fn customer(&self) -> &str {
         &self.session_data.customer
     }
 
-    fn session_id(&self) -> &str {
+    pub fn session_id(&self) -> &str {
         &self.session_data.session_id
     }
 
-    fn country(&self) -> &str {
+    pub fn country(&self) -> &str {
         &self.session_data.country
     }
 
-    fn session_time(&self) -> usize {
+    pub fn session_time(&self) -> usize {
         self.session_data.session_time
     }
 
-    fn password(&self) -> &str {
+    pub fn password(&self) -> &str {
         &self.password
     }
 }
