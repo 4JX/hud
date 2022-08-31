@@ -6,7 +6,7 @@ use rcgen::{
     KeyUsagePurpose,
 };
 
-pub(crate) fn create_ca_if_not_exist() {
+pub fn create_ca_if_not_exist() {
     if !Path::new("cer/ca.crt").exists() || !Path::new("cer/ca.key").exists() {
         let ca = gen_ca();
 

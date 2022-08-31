@@ -5,9 +5,9 @@ use hudsucker::{
     rustls, HttpContext, HttpHandler, Proxy, RequestOrResponse,
 };
 
-use log::error;
+use log::{error, warn};
 
-use reqwest_impersonate::ChromeVersion;
+use reqwest_impersonate::{ChromeVersion, Method};
 use rustls_pemfile as pemfile;
 use std::{fs, net::SocketAddr};
 
@@ -28,35 +28,35 @@ struct ProxyHandler;
 
 #[async_trait]
 impl HttpHandler for ProxyHandler {
-    async fn handle_request(
-        &mut self,
-        _ctx: &HttpContext,
-        req: Request<Body>,
-    ) -> RequestOrResponse {
-        match req.method().as_str() {
-            "CONNECT" => {
-                if handle_auth(&req) {
-                    RequestOrResponse::Request(req)
-                } else {
-                    RequestOrResponse::Response(auth::res_auth_needed())
+    async fn handle_request(&mut self, ctx: &HttpContext, req: Request<Body>) -> RequestOrResponse {
+        let session_result = handle_auth(ctx, &req);
+
+        if req.method() == Method::CONNECT {
+            match session_result {
+                Ok(_) => {
+                    // Allow the connection to pass through
+                    return RequestOrResponse::Request(req);
+                }
+                Err(err) => {
+                    warn!("Proxy connect failed\n{err:?}");
+
+                    return RequestOrResponse::Response(auth::res_auth_needed());
                 }
             }
-            _ => {
-                let client_imp = reqwest_impersonate::Client::builder()
-                    .chrome_builder(ChromeVersion::V104)
-                    .build()
-                    .unwrap();
+        };
 
-                let reqwest_req = req.try_into().unwrap();
+        let client_imp = reqwest_impersonate::Client::builder()
+            .chrome_builder(ChromeVersion::V104)
+            .build()
+            .unwrap();
 
-                let reqwest_res = client_imp.execute(reqwest_req).await.unwrap();
+        let reqwest_req: reqwest_impersonate::Request = req.try_into().unwrap();
 
-                let res = response_reqwest_to_hud(reqwest_res).await;
+        let reqwest_res = client_imp.execute(reqwest_req).await.unwrap();
 
-                RequestOrResponse::Response(res)
-            }
-        }
-        // RequestOrResponse::Response(Response::builder().body(Body::from("foo")).unwrap())
+        let res = response_reqwest_to_hud(reqwest_res).await.unwrap();
+
+        RequestOrResponse::Response(res)
     }
 
     async fn handle_response(&mut self, _ctx: &HttpContext, res: Response<Body>) -> Response<Body> {
@@ -97,13 +97,13 @@ async fn main() {
 }
 
 fn setup_logging() -> color_eyre::Result<()> {
-    if std::env::var("RUST_LIB_BACKTRACE").is_err() {
-        std::env::set_var("RUST_LIB_BACKTRACE", "1");
-    }
+    // if std::env::var("RUST_LIB_BACKTRACE").is_err() {
+    //     std::env::set_var("RUST_LIB_BACKTRACE", "1");
+    // }
 
-    if std::env::var("RUST_BACKTRACE").is_err() {
-        std::env::set_var("RUST_BACKTRACE", "1");
-    }
+    // if std::env::var("RUST_BACKTRACE").is_err() {
+    //     std::env::set_var("RUST_BACKTRACE", "1");
+    // }
 
     env_logger::init();
 

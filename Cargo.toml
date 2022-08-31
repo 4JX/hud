@@ -29,6 +29,9 @@ cached = { path = "../cached" }
 thiserror = "1.0.32"
 serde = { version = "1.0.144", features = ["derive"] }
 serde_json = "1.0.85"
+# error-stack = "0.1.1"
+# Switch to crates.io once 0.2.0 lands and fixes the compilation issues
+error-stack = { git = "https://github.com/hashintel/hash.git", rev = "ea0dacf" }
 
 
 [patch.crates-io]
