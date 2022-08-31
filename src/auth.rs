@@ -21,6 +21,15 @@ pub fn res_auth_needed() -> Response<Body> {
         .unwrap()
 }
 
+/// Shorthand to create an auth required response
+pub fn foo() -> Response<Body> {
+    Response::builder()
+        .status(StatusCode::OK)
+        // .header("Proxy-Authenticate", "Basic")
+        .body(Body::empty())
+        .unwrap()
+}
+
 #[derive(Debug, Error)]
 pub enum CreateSessionError {
     #[error("Could not extract valid data from the Proxy-Authorization header")]

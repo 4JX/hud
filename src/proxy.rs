@@ -4,7 +4,7 @@ use hudsucker::{
     HttpContext, HttpHandler, RequestOrResponse,
 };
 use log::warn;
-use reqwest_impersonate::{ChromeVersion, Method};
+use reqwest_impersonate::{header::HOST, ChromeVersion, Method};
 
 use crate::{
     auth::{self, handle_auth},
@@ -45,7 +45,10 @@ impl HttpHandler for ProxyHandler {
             }
         }
 
-        let reqwest_req: reqwest_impersonate::Request = req.try_into().unwrap();
+        let mut reqwest_req: reqwest_impersonate::Request = req.try_into().unwrap();
+
+        // Remove redundant HOST header to keep the fingerprint in check
+        reqwest_req.headers_mut().remove(HOST);
 
         self.storage.acquire_client(ctx, &reqwest_req);
 

@@ -1,9 +1,13 @@
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use cached::{CanExpire, ExpiringValueCache};
 use hudsucker::HttpContext;
+use log::info;
 use reqwest_impersonate::{Client, Request};
 use sha1::Digest;
+
+// At least 10 mins between each flush
+const EXPIRED_FLUSH_INTERVAL: Duration = Duration::from_secs(60 * 10);
 
 #[allow(dead_code)]
 #[derive(Clone)]
@@ -15,11 +19,12 @@ pub struct ClientStorage {
 #[derive(Clone)]
 pub struct ExpiringValue<T> {
     inner: T,
+    expiry: Instant,
 }
 
 impl<T> CanExpire for ExpiringValue<T> {
     fn is_expired(&self) -> bool {
-        true
+        Instant::now() > self.expiry
     }
 }
 
@@ -33,6 +38,14 @@ impl ClientStorage {
 
     /// Get a client based on the session_id and host
     pub fn acquire_client(&mut self, ctx: &HttpContext, request: &Request) {
+        let diff = Instant::now() - self.last_flush;
+        if diff > EXPIRED_FLUSH_INTERVAL {
+            self.inner.flush();
+            self.last_flush = Instant::now();
+
+            info!("Client cache flushed");
+        }
+
         let mut hasher = sha1::Sha1::new();
 
         hasher.update(ctx.client_addr.to_string());
