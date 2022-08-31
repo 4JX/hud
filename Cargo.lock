@@ -886,6 +886,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "hex"
+version = "0.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
+
+[[package]]
 name = "http"
 version = "0.2.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -928,6 +934,7 @@ dependencies = [
  "color-eyre",
  "env_logger",
  "error-stack",
+ "hex",
  "hudsucker",
  "itertools",
  "log",
@@ -936,6 +943,7 @@ dependencies = [
  "rustls-pemfile",
  "serde",
  "serde_json",
+ "sha1",
  "thiserror",
  "tokio",
 ]
@@ -1810,6 +1818,17 @@ name = "sha-1"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "028f48d513f9678cda28f6e4064755b3fbb2af6acd672f2c209b62323f7aea0f"
+dependencies = [
+ "cfg-if",
+ "cpufeatures",
+ "digest",
+]
+
+[[package]]
+name = "sha1"
+version = "0.10.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5cf2781a4ca844dd4f9b608a1791eea19830df0ad3cdd9988cd05f1c66ccb63a"
 dependencies = [
  "cfg-if",
  "cpufeatures",

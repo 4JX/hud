@@ -13,6 +13,7 @@ async fn shutdown_signal() {
 
 mod auth;
 mod ca;
+mod client_storage;
 mod convert;
 mod proxy;
 
@@ -40,7 +41,7 @@ async fn main() {
         .with_addr(SocketAddr::from(([127, 0, 0, 1], 3000)))
         .with_rustls_client()
         .with_ca(ca)
-        .with_http_handler(ProxyHandler)
+        .with_http_handler(ProxyHandler::new())
         .build();
 
     if let Err(e) = proxy.start(shutdown_signal()).await {

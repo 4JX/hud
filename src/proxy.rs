@@ -8,37 +8,51 @@ use reqwest_impersonate::{ChromeVersion, Method};
 
 use crate::{
     auth::{self, handle_auth},
+    client_storage::ClientStorage,
     convert::response_reqwest_to_hud,
 };
 
 #[derive(Clone)]
-pub struct ProxyHandler;
+pub struct ProxyHandler {
+    storage: ClientStorage,
+}
+
+impl ProxyHandler {
+    pub fn new() -> Self {
+        ProxyHandler {
+            storage: ClientStorage::new(),
+        }
+    }
+}
 
 #[async_trait]
 impl HttpHandler for ProxyHandler {
     async fn handle_request(&mut self, ctx: &HttpContext, req: Request<Body>) -> RequestOrResponse {
-        let session_result = handle_auth(ctx, &req);
-
         if req.method() == Method::CONNECT {
-            match session_result {
+            match handle_auth(ctx, &req) {
                 Ok(_) => {
-                    // Allow the connection to pass through
-                    return RequestOrResponse::Request(req);
+                    if req.method() == Method::CONNECT {
+                        // Allow the connection to pass through
+                        return RequestOrResponse::Request(req);
+                    };
                 }
+
                 Err(err) => {
                     warn!("Proxy connect failed\n{err:?}");
 
                     return RequestOrResponse::Response(auth::res_auth_needed());
                 }
             }
-        };
+        }
+
+        let reqwest_req: reqwest_impersonate::Request = req.try_into().unwrap();
+
+        self.storage.acquire_client(ctx, &reqwest_req);
 
         let client_imp = reqwest_impersonate::Client::builder()
             .chrome_builder(ChromeVersion::V104)
             .build()
             .unwrap();
-
-        let reqwest_req: reqwest_impersonate::Request = req.try_into().unwrap();
 
         let reqwest_res = client_imp.execute(reqwest_req).await.unwrap();
 

@@ -32,6 +32,8 @@ serde_json = "1.0.85"
 # error-stack = "0.1.1"
 # Switch to crates.io once 0.2.0 lands and fixes the compilation issues
 error-stack = { git = "https://github.com/hashintel/hash.git", rev = "ea0dacf" }
+sha1 = "0.10.2"
+hex = "0.4.3"
 
 
 [patch.crates-io]
