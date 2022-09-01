@@ -21,3 +21,11 @@ pub fn permanent_redirect(req: Uri) -> Response<Body> {
         .body(Body::empty())
         .unwrap()
 }
+
+/// Shorthand to create an internal server error response
+pub fn internal_server_error() -> Response<Body> {
+    Response::builder()
+        .status(StatusCode::INTERNAL_SERVER_ERROR)
+        .body(Body::empty())
+        .unwrap()
+}

@@ -4,9 +4,8 @@ use cached::async_sync::Mutex;
 use hudsucker::{certificate_authority::RcgenAuthority, Proxy};
 use log::error;
 
-use crate::storage::{ClientStorage, SessionStorage};
-
 use super::ProxyHandler;
+use crate::storage::{ClientStorage, SessionStorage};
 
 // Wraps a proxy to provide an in-memory cache
 pub struct ProxyWrapper {

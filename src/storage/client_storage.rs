@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use log::trace;
 use reqwest_impersonate::{ChromeVersion, Client};
 use sha1::Digest;
 
@@ -48,6 +49,11 @@ impl ClientHash {
         hasher.update(route_type);
 
         let finished = hasher.finalize();
-        Self(hex::encode(finished))
+
+        let encoded = hex::encode(finished);
+
+        trace!("{encoded}");
+
+        Self(encoded)
     }
 }

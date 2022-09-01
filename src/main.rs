@@ -1,8 +1,7 @@
-use std::fs;
+use hudsucker::certificate_authority::RcgenAuthority;
+use log::info;
 
 use crate::proxy::ProxyWrapper;
-use hudsucker::{certificate_authority::RcgenAuthority, rustls};
-use rustls_pemfile as pemfile;
 
 mod auth;
 mod ca;
@@ -12,27 +11,22 @@ mod response;
 mod route;
 mod storage;
 
+const RUST_LOG: &str = "RUST_LOG";
+
 #[tokio::main]
-async fn main() {
-    setup_logging().unwrap();
+async fn main() -> color_eyre::Result<()> {
+    setup_logging()?;
 
-    ca::create_ca_if_not_exist();
+    info!("Starting up proxy");
 
-    let private_key = rustls::PrivateKey(
-        pemfile::pkcs8_private_keys(&mut fs::read("cer/ca.key").unwrap().as_slice())
-            .expect("Failed to parse private key")
-            .remove(0),
-    );
-    let ca_cert = rustls::Certificate(
-        pemfile::certs(&mut fs::read("cer/ca.crt").unwrap().as_slice())
-            .expect("Failed to parse CA certificate")
-            .remove(0),
-    );
+    let (private_key, ca_cert) = ca::acquire_ca();
 
     let ca = RcgenAuthority::new(private_key, ca_cert, 1_000)
         .expect("Failed to create Certificate Authority");
 
     ProxyWrapper::new().start(ca).await;
+
+    Ok(())
 }
 
 fn setup_logging() -> color_eyre::Result<()> {
@@ -43,6 +37,10 @@ fn setup_logging() -> color_eyre::Result<()> {
     // if std::env::var("RUST_BACKTRACE").is_err() {
     //     std::env::set_var("RUST_BACKTRACE", "1");
     // }
+
+    if std::env::var(RUST_LOG).is_err() {
+        std::env::set_var(RUST_LOG, "error,hud=info");
+    }
 
     env_logger::init();
 

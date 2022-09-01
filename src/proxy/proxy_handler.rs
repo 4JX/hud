@@ -6,8 +6,7 @@ use hudsucker::{
     hyper::{http::uri::Scheme, Body, Request, Response, Uri},
     HttpContext, HttpHandler, RequestOrResponse,
 };
-use log::warn;
-
+use log::{trace, warn};
 use reqwest_impersonate::{header::HOST, Method};
 
 use crate::{
@@ -39,6 +38,8 @@ impl ProxyHandler {
 #[async_trait]
 impl HttpHandler for ProxyHandler {
     async fn handle_request(&mut self, ctx: &HttpContext, req: Request<Body>) -> RequestOrResponse {
+        trace!("Processing incoming request");
+
         let conn_hash = ConnectionHash::new(ctx, &req);
 
         if req.method() == Method::CONNECT {
@@ -48,6 +49,9 @@ impl HttpHandler for ProxyHandler {
                         .lock()
                         .await
                         .insert_session(conn_hash, session);
+
+                    trace!("CONNECT successful");
+
                     // Allow the connection to pass through
                     RequestOrResponse::Request(req)
                 }
@@ -71,17 +75,25 @@ impl HttpHandler for ProxyHandler {
 
             let client = storage.acquire_client(client_hash, session);
 
-            let reqwest_res = client.execute(reqwest_req).await.unwrap();
+            match client.execute(reqwest_req).await {
+                Ok(res) => {
+                    let http_res = response_reqwest_to_hud(res).await.unwrap();
 
-            let res = response_reqwest_to_hud(reqwest_res).await.unwrap();
-
-            RequestOrResponse::Response(res)
+                    RequestOrResponse::Response(http_res)
+                }
+                Err(_) => {
+                    return RequestOrResponse::Response(response::internal_server_error());
+                }
+            }
         } else {
             // There is no currently active session for the given ConnectionHash
-            // Either the request is being made using http or something went wrong when authenticating
+            // Either the request is being made using http or something went wrong when
+            // authenticating
             if let Some(scheme) = req.uri().scheme() {
                 // If it is an http request, attempt to redirect to the https site
                 if scheme == &Scheme::HTTP {
+                    trace!("Url provided is using HTTP, redirecting to HTTPS");
+
                     let http_uri = req.uri().clone();
                     let mut parts = http_uri.into_parts();
                     parts.scheme = Some(Scheme::HTTPS);
@@ -90,6 +102,8 @@ impl HttpHandler for ProxyHandler {
                     return RequestOrResponse::Response(response::permanent_redirect(https_uri));
                 }
             }
+
+            trace!("Could not authorize user");
 
             RequestOrResponse::Response(response::auth_needed())
         }

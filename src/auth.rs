@@ -62,7 +62,8 @@ pub fn handle_auth(ctx: &HttpContext, req: &Request<Body>) -> Result<Session, Cr
     }
 }
 
-/// Represents an active connection to the proxy that has included correctly formatted information
+/// Represents an active connection to the proxy that has included correctly
+/// formatted information
 #[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct Session {
@@ -93,7 +94,8 @@ struct SessionData {
 struct ParseAuthError;
 #[allow(dead_code)]
 impl Session {
-    /// Creates a new session struct based on the information provided by the Proxy-Authorization header
+    /// Creates a new session struct based on the information provided by the
+    /// Proxy-Authorization header
     fn new(ctx: &HttpContext, auth_header_str: &str) -> Result<Self, ParseAuthError> {
         let base64_auth: String = auth_header_str
             .chars()

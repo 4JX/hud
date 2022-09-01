@@ -14,6 +14,7 @@ use hudsucker::{
     hyper::{Body, Request},
     HttpContext,
 };
+use log::trace;
 pub use session_storage::SessionStorage;
 use sha1::Digest;
 
@@ -118,6 +119,11 @@ impl ConnectionHash {
         hasher.update(host);
 
         let finished = hasher.finalize();
-        Self(hex::encode(finished))
+
+        let encoded = hex::encode(finished);
+
+        trace!("{encoded}");
+
+        Self(encoded)
     }
 }
