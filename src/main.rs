@@ -16,6 +16,7 @@ mod ca;
 mod convert;
 mod proxy;
 mod response;
+mod route;
 mod storage;
 
 #[tokio::main]

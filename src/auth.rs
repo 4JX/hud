@@ -1,6 +1,6 @@
 use std::{collections::HashMap, net::SocketAddr};
 
-use error_stack::{IntoReport, Report, Result, ResultExt};
+use error_stack::{bail, IntoReport, Report, Result, ResultExt};
 use hudsucker::{
     hyper::{Body, Request},
     HttpContext,
@@ -114,13 +114,41 @@ impl Session {
             ))
         })?;
 
-        let parsed_values: HashMap<&str, &str> = username.split('-').tuples::<(_, _)>().collect();
+        let username_split = username.split('-');
+
+        let count = username_split.clone().count();
+
+        if count % 2 != 0 {
+            bail!(Report::new(ParseAuthError).attach_printable(
+                format! {"Expected even number of elements in username, found {count}"},
+            ));
+        }
+
+        let parsed_values: HashMap<&str, &str> = username_split.tuples::<(_, _)>().collect();
 
         let as_json = serde_json::to_string(&parsed_values)
             .into_report()
             .change_context(ParseAuthError)?;
+
         let raw: SessionDataRaw = serde_json::from_str(&as_json)
             .into_report()
+            .change_context(ParseAuthError)?;
+
+        // Verbosity moment
+        check_param_length(&raw.customer, 0, 32)
+            .attach_printable("customer")
+            .change_context(ParseAuthError)?;
+        check_param_length(&raw.session_id, 0, 32)
+            .attach_printable("session_id")
+            .change_context(ParseAuthError)?;
+        check_param_length(&raw.country, 0, 32)
+            .attach_printable("country")
+            .change_context(ParseAuthError)?;
+        check_param_length(&raw.session_time, 0, 32)
+            .attach_printable("session_time")
+            .change_context(ParseAuthError)?;
+        check_param_length(password, 0, 64)
+            .attach_printable("password")
             .change_context(ParseAuthError)?;
 
         let raw_session_time = raw.session_time;
@@ -163,4 +191,27 @@ impl Session {
     pub fn password(&self) -> &str {
         &self.password
     }
+}
+
+#[derive(Debug, Error)]
+#[error(
+    "The string passed did not fit in the specified bounds. Expected {min}-{max}, found {found}"
+)]
+struct ParamLengthError {
+    min: usize,
+    max: usize,
+    found: usize,
+}
+
+fn check_param_length(s: &str, min: usize, max: usize) -> Result<(), ParamLengthError> {
+    let len = s.len();
+    if s.is_empty() || len > max {
+        bail!(Report::new(ParamLengthError {
+            min,
+            max,
+            found: len
+        }));
+    }
+
+    Ok(())
 }

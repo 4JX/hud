@@ -16,7 +16,7 @@ impl SessionStorage {
         }
     }
 
-    /// Insert a new session and get the old one if it exists for the given [ConnectionHash]
+    /// Insert a new [Session] and get the old one if it exists for the given [ConnectionHash]
     pub fn insert_session(
         &mut self,
         conn_hash: ConnectionHash,

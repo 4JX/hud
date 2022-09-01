@@ -9,7 +9,7 @@ use cached::{Cached, CanExpire, ExpiringValueCache};
 mod client_storage;
 mod session_storage;
 
-pub use client_storage::ClientStorage;
+pub use client_storage::{ClientHash, ClientStorage};
 use hudsucker::{
     hyper::{Body, Request},
     HttpContext,
@@ -67,6 +67,15 @@ impl<K: Hash + Eq + Clone, V> Storage<K, V> {
     pub fn get(&mut self, k: &K) -> Option<&V> {
         self.inner.cache_get(k).map(|v| v.get())
     }
+
+    fn get_or_set_with_duration<F: FnOnce() -> V>(&mut self, k: K, f: F, d: Duration) -> &mut V {
+        let wrapper = || ExpiringValue {
+            inner: f(),
+            expiry: Instant::now() + d,
+        };
+
+        self.inner.cache_get_or_set_with(k, wrapper).get_mut()
+    }
 }
 
 impl<T> ExpiringValue<T> {
@@ -77,11 +86,21 @@ impl<T> ExpiringValue<T> {
     fn get(&self) -> &T {
         &self.inner
     }
+
+    fn get_mut(&mut self) -> &mut T {
+        &mut self.inner
+    }
 }
 
 /// Represents an unique identifier for a given IP and host
 #[derive(Hash, PartialEq, Eq, Clone, Debug)]
 pub struct ConnectionHash(String);
+
+impl AsRef<[u8]> for ConnectionHash {
+    fn as_ref(&self) -> &[u8] {
+        self.0.as_ref()
+    }
+}
 
 impl ConnectionHash {
     pub fn new(ctx: &HttpContext, request: &Request<Body>) -> Self {
