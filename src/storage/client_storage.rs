@@ -21,10 +21,7 @@ impl ClientStorage {
 
     /// Get a client based on the [ConnectionHash]
     pub fn acquire_client(&mut self, client_hash: ClientHash, session: &Session) -> &mut Client {
-        dbg!(&client_hash);
-
         let f = || {
-            dbg!("NEW CLIENT CREATED");
             reqwest_impersonate::Client::builder()
                 .chrome_builder(ChromeVersion::V104)
                 .build()
@@ -45,12 +42,6 @@ impl ClientHash {
     pub fn new(conn_hash: &ConnectionHash, session: &Session, route_type: &str) -> Self {
         let mut hasher = sha1::Sha1::new();
 
-        dbg!(
-            conn_hash,
-            session.session_id(),
-            session.password(),
-            route_type
-        );
         hasher.update(conn_hash);
         hasher.update(session.session_id());
         hasher.update(session.password());

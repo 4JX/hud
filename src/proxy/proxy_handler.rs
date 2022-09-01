@@ -1,9 +1,13 @@
+use std::sync::Arc;
+
+use cached::async_sync::Mutex;
 use hudsucker::{
     async_trait::async_trait,
     hyper::{http::uri::Scheme, Body, Request, Response, Uri},
     HttpContext, HttpHandler, RequestOrResponse,
 };
 use log::warn;
+
 use reqwest_impersonate::{header::HOST, Method};
 
 use crate::{
@@ -16,15 +20,18 @@ use crate::{
 
 #[derive(Clone)]
 pub struct ProxyHandler {
-    client_storage: ClientStorage,
-    session_storage: SessionStorage,
+    client_storage: Arc<Mutex<ClientStorage>>,
+    session_storage: Arc<Mutex<SessionStorage>>,
 }
 
 impl ProxyHandler {
-    pub fn new() -> Self {
+    pub fn new(
+        client_storage: Arc<Mutex<ClientStorage>>,
+        session_storage: Arc<Mutex<SessionStorage>>,
+    ) -> Self {
         ProxyHandler {
-            client_storage: ClientStorage::new(),
-            session_storage: SessionStorage::new(),
+            client_storage,
+            session_storage,
         }
     }
 }
@@ -37,7 +44,10 @@ impl HttpHandler for ProxyHandler {
         if req.method() == Method::CONNECT {
             match handle_auth(ctx, &req) {
                 Ok(session) => {
-                    self.session_storage.insert_session(conn_hash, session);
+                    self.session_storage
+                        .lock()
+                        .await
+                        .insert_session(conn_hash, session);
                     // Allow the connection to pass through
                     RequestOrResponse::Request(req)
                 }
@@ -48,7 +58,7 @@ impl HttpHandler for ProxyHandler {
                     RequestOrResponse::Response(response::auth_needed())
                 }
             }
-        } else if let Some(session) = self.session_storage.get_session(&conn_hash) {
+        } else if let Some(session) = self.session_storage.lock().await.get_session(&conn_hash) {
             let route_type = get_route_type(session);
             let client_hash = ClientHash::new(&conn_hash, session, &route_type);
 
@@ -57,7 +67,9 @@ impl HttpHandler for ProxyHandler {
             // Remove redundant HOST header to keep the fingerprint in check
             reqwest_req.headers_mut().remove(HOST);
 
-            let client = self.client_storage.acquire_client(client_hash, session);
+            let mut storage = self.client_storage.lock().await;
+
+            let client = storage.acquire_client(client_hash, session);
 
             let reqwest_res = client.execute(reqwest_req).await.unwrap();
 

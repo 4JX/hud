@@ -18,7 +18,7 @@ pub use session_storage::SessionStorage;
 use sha1::Digest;
 
 // At least 10 mins between each flush
-const EXPIRED_FLUSH_INTERVAL: Duration = Duration::from_secs(60 * 10);
+const EXPIRED_FLUSH_INTERVAL: Duration = Duration::from_secs(1);
 
 #[allow(dead_code)]
 #[derive(Clone)]
@@ -50,11 +50,7 @@ impl<K: Hash + Eq + Clone, V> Storage<K, V> {
     }
 
     pub fn set_with_duration(&mut self, k: K, v: V, d: Duration) -> Option<V> {
-        let diff = Instant::now() - self.last_flush;
-        if diff > self.flush_interval {
-            self.inner.flush();
-            self.last_flush = Instant::now();
-        }
+        self.flush();
 
         let expiring = ExpiringValue {
             inner: v,
@@ -69,12 +65,22 @@ impl<K: Hash + Eq + Clone, V> Storage<K, V> {
     }
 
     fn get_or_set_with_duration<F: FnOnce() -> V>(&mut self, k: K, f: F, d: Duration) -> &mut V {
+        self.flush();
+
         let wrapper = || ExpiringValue {
             inner: f(),
             expiry: Instant::now() + d,
         };
 
         self.inner.cache_get_or_set_with(k, wrapper).get_mut()
+    }
+
+    fn flush(&mut self) {
+        let diff = Instant::now() - self.last_flush;
+        if diff > self.flush_interval {
+            self.inner.flush();
+            self.last_flush = Instant::now();
+        }
     }
 }
 
@@ -108,7 +114,7 @@ impl ConnectionHash {
 
         let mut hasher = sha1::Sha1::new();
 
-        hasher.update(ctx.client_addr.to_string());
+        hasher.update(ctx.client_addr.ip().to_string());
         hasher.update(host);
 
         let finished = hasher.finalize();

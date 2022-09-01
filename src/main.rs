@@ -1,15 +1,8 @@
-use std::{fs, net::SocketAddr};
+use std::fs;
 
-use hudsucker::{certificate_authority::RcgenAuthority, rustls, Proxy};
-use log::error;
-use proxy::ProxyHandler;
+use crate::proxy::ProxyWrapper;
+use hudsucker::{certificate_authority::RcgenAuthority, rustls};
 use rustls_pemfile as pemfile;
-
-async fn shutdown_signal() {
-    tokio::signal::ctrl_c()
-        .await
-        .expect("Failed to install CTRL+C signal handler");
-}
 
 mod auth;
 mod ca;
@@ -39,16 +32,7 @@ async fn main() {
     let ca = RcgenAuthority::new(private_key, ca_cert, 1_000)
         .expect("Failed to create Certificate Authority");
 
-    let proxy = Proxy::builder()
-        .with_addr(SocketAddr::from(([127, 0, 0, 1], 3000)))
-        .with_rustls_client()
-        .with_ca(ca)
-        .with_http_handler(ProxyHandler::new())
-        .build();
-
-    if let Err(e) = proxy.start(shutdown_signal()).await {
-        error!("{}", e);
-    }
+    ProxyWrapper::new().start(ca).await;
 }
 
 fn setup_logging() -> color_eyre::Result<()> {
