@@ -23,7 +23,7 @@ tokio = { version = "1.20.1", features = [
 #     "chrome",
 # ] }
 
-reqwest-impersonate = { git = "https://github.com/4JX/reqwest-impersonate", rev = "83af401",default-features = false, features = [
+reqwest-impersonate = { git = "https://github.com/4JX/reqwest-impersonate", rev = "83af401", default-features = false, features = [
     "chrome",
 ] }
 
@@ -32,7 +32,7 @@ itertools = "0.10.3"
 # cached = "0.38.0"
 # cached = { path = "../cached" }
 # Waiting on https://github.com/jaemk/cached/pull/129
-cached = {git = "https://github.com/4JX/cached",rev ="87ad459"}
+cached = { git = "https://github.com/4JX/cached", rev = "87ad459" }
 thiserror = "1.0.32"
 serde = { version = "1.0.144", features = ["derive"] }
 serde_json = "1.0.85"

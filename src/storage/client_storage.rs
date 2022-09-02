@@ -31,7 +31,14 @@ impl ClientStorage {
 
         let dur = Duration::from_secs(session.session_time());
 
-        self.inner.get_or_set_with_duration(client_hash, f, dur)
+        let expiring = self.inner.get_or_set_with_duration(client_hash, f, dur);
+
+        // If the session_time has changed, update the expiration time
+        if expiring.duration != dur {
+            expiring.set_duration(dur)
+        }
+
+        expiring.get_mut()
     }
 }
 

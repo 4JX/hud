@@ -30,19 +30,20 @@ pub struct Storage<K: Hash + Eq, V> {
 }
 
 #[derive(Clone)]
-pub struct ExpiringValue<T> {
+struct ExpiringValue<T> {
     inner: T,
-    expiry: Instant,
+    created_at: Instant,
+    duration: Duration,
 }
 
 impl<T> CanExpire for ExpiringValue<T> {
     fn is_expired(&self) -> bool {
-        Instant::now() > self.expiry
+        Instant::now() > (self.created_at + self.duration)
     }
 }
 
 impl<K: Hash + Eq + Clone, V> Storage<K, V> {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Self {
             inner: ExpiringValueCache::with_size(10000),
             last_flush: Instant::now(),
@@ -50,30 +51,37 @@ impl<K: Hash + Eq + Clone, V> Storage<K, V> {
         }
     }
 
-    pub fn set_with_duration(&mut self, k: K, v: V, d: Duration) -> Option<V> {
+    fn set_with_duration(&mut self, k: K, v: V, d: Duration) -> Option<V> {
         self.flush();
 
         let expiring = ExpiringValue {
             inner: v,
-            expiry: Instant::now() + d,
+            created_at: Instant::now(),
+            duration: d,
         };
 
         self.inner.cache_set(k, expiring).map(|v| v.take())
     }
 
-    pub fn get(&mut self, k: &K) -> Option<&V> {
+    fn get(&mut self, k: &K) -> Option<&V> {
         self.inner.cache_get(k).map(|v| v.get())
     }
 
-    fn get_or_set_with_duration<F: FnOnce() -> V>(&mut self, k: K, f: F, d: Duration) -> &mut V {
+    fn get_or_set_with_duration<F: FnOnce() -> V>(
+        &mut self,
+        k: K,
+        f: F,
+        d: Duration,
+    ) -> &mut ExpiringValue<V> {
         self.flush();
 
         let wrapper = || ExpiringValue {
             inner: f(),
-            expiry: Instant::now() + d,
+            created_at: Instant::now(),
+            duration: d,
         };
 
-        self.inner.cache_get_or_set_with(k, wrapper).get_mut()
+        self.inner.cache_get_or_set_with(k, wrapper)
     }
 
     fn flush(&mut self) {
@@ -96,6 +104,12 @@ impl<T> ExpiringValue<T> {
 
     fn get_mut(&mut self) -> &mut T {
         &mut self.inner
+    }
+
+    /// Resets the expiration time of the [`ExpiringValue`] with the new duration
+    fn set_duration(&mut self, d: Duration) {
+        self.created_at = Instant::now();
+        self.duration = d;
     }
 }
 
