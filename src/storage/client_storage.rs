@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use log::trace;
-use reqwest_impersonate::{ChromeVersion, Client};
+use reqwest_impersonate::{browser::ChromeVersion, Client};
 use sha1::Digest;
 
 use super::{ConnectionHash, Storage};
