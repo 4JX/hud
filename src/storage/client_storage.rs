@@ -15,12 +15,12 @@ pub struct ClientStorage {
 
 impl ClientStorage {
     pub fn new() -> Self {
-        ClientStorage {
+        Self {
             inner: Storage::new(),
         }
     }
 
-    /// Get a client based on the [ConnectionHash]
+    /// Get a client based on the [`ConnectionHash`]
     pub fn acquire_client(&mut self, client_hash: ClientHash, session: &Session) -> &mut Client {
         let f = || {
             reqwest_impersonate::Client::builder()

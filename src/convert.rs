@@ -30,7 +30,7 @@ pub async fn response_reqwest_to_hud(
         .bytes()
         .await
         .into_report()
-        .attach_printable(format! {"Could not get body bytes for a request to {url}"})
+        .attach_printable(format!("Could not get body bytes for a request to {url}"))
         .change_context(ConversionError)?;
 
     builder

@@ -28,7 +28,7 @@ impl ProxyHandler {
         client_storage: Arc<Mutex<ClientStorage>>,
         session_storage: Arc<Mutex<SessionStorage>>,
     ) -> Self {
-        ProxyHandler {
+        Self {
             client_storage,
             session_storage,
         }
@@ -99,7 +99,7 @@ impl HttpHandler for ProxyHandler {
                     parts.scheme = Some(Scheme::HTTPS);
                     let https_uri = Uri::from_parts(parts).unwrap();
 
-                    return RequestOrResponse::Response(response::permanent_redirect(https_uri));
+                    return RequestOrResponse::Response(response::permanent_redirect(&https_uri));
                 }
             }
 

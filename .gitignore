@@ -2,3 +2,5 @@
 .history
 cer
 .vscode
+.cargo
+rustfmt.toml

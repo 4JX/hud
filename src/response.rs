@@ -14,7 +14,7 @@ pub fn auth_needed() -> Response<Body> {
 }
 
 /// Shorthand to create a permanent redirect response
-pub fn permanent_redirect(req: Uri) -> Response<Body> {
+pub fn permanent_redirect(req: &Uri) -> Response<Body> {
     Response::builder()
         .status(StatusCode::PERMANENT_REDIRECT)
         .header(LOCATION, req.to_string())

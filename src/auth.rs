@@ -46,13 +46,13 @@ pub fn handle_auth(ctx: &HttpContext, req: &Request<Body>) -> Result<Session, Cr
                 // TODO: Actually handle auth!
                 if session.customer() == "user123" && session.password() == "foo" {
                     return Ok(session);
-                } else {
-                    return Err(Report::new(CreateSessionError::Unauthorized {
-                        addr: session.addr().to_string(),
-                        customer: session.customer().to_string(),
-                        password: session.password().to_string(),
-                    }));
                 }
+
+                return Err(Report::new(CreateSessionError::Unauthorized {
+                    addr: session.addr().to_string(),
+                    customer: session.customer().to_string(),
+                    password: session.password().to_string(),
+                }));
             }
 
             Err(Report::new(CreateSessionError::MalformedHeader)
@@ -121,9 +121,9 @@ impl Session {
         let count = username_split.clone().count();
 
         if count % 2 != 0 {
-            bail!(Report::new(ParseAuthError).attach_printable(
-                format! {"Expected even number of elements in username, found {count}"},
-            ));
+            bail!(Report::new(ParseAuthError).attach_printable(format!(
+                "Expected even number of elements in username, found {count}"
+            ),));
         }
 
         let parsed_values: HashMap<&str, &str> = username_split.tuples::<(_, _)>().collect();
@@ -154,7 +154,7 @@ impl Session {
             .change_context(ParseAuthError)?;
 
         let raw_session_time = raw.session_time;
-        Ok(Session {
+        Ok(Self {
             addr: ctx.client_addr,
             session_data: SessionData {
                 customer: raw.customer,
