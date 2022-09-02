@@ -110,9 +110,9 @@ dependencies = [
 
 [[package]]
 name = "async-io"
-version = "1.8.0"
+version = "1.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0ab006897723d9352f63e2b13047177c3982d8d79709d713ce7747a8f19fd1b0"
+checksum = "83e21f3a490c72b3b0cf44962180e60045de2925d8dff97918f7ee43c8f637c7"
 dependencies = [
  "autocfg",
  "concurrent-queue",
@@ -313,6 +313,7 @@ checksum = "c1db59621ec70f09c5e9b597b220c7a2b43611f4710dc03ceb8748637775692c"
 [[package]]
 name = "cached"
 version = "0.38.0"
+source = "git+https://github.com/4JX/cached?rev=87ad459#87ad4591cd0d1fdd7b1541760c0c18adf34eb316"
 dependencies = [
  "async-trait",
  "async_once",
@@ -330,6 +331,7 @@ dependencies = [
 [[package]]
 name = "cached_proc_macro"
 version = "0.15.0"
+source = "git+https://github.com/4JX/cached?rev=87ad459#87ad4591cd0d1fdd7b1541760c0c18adf34eb316"
 dependencies = [
  "cached_proc_macro_types",
  "darling",
@@ -340,6 +342,7 @@ dependencies = [
 [[package]]
 name = "cached_proc_macro_types"
 version = "0.1.0"
+source = "git+https://github.com/4JX/cached?rev=87ad459#87ad4591cd0d1fdd7b1541760c0c18adf34eb316"
 
 [[package]]
 name = "camino"
@@ -856,6 +859,7 @@ checksum = "9b919933a397b79c37e33b77bb2aa3dc8eb6e165ad809e58ff75bc7db2e34574"
 [[package]]
 name = "h2"
 version = "0.3.14"
+source = "git+https://github.com/4JX/h2.git?branch=test#f486fc3adce0a70e4eff475e4e59e29c5e327f8c"
 dependencies = [
  "bytes",
  "fnv",
@@ -915,9 +919,9 @@ dependencies = [
 
 [[package]]
 name = "httparse"
-version = "1.7.1"
+version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "496ce29bb5a52785b44e0f7ca2847ae0bb839c9bd28f69acac9b99d461c0c04c"
+checksum = "d897f394bad6a705d5f4104762e116a75639e470d80901eed05a860a95cb1904"
 
 [[package]]
 name = "httpdate"
@@ -984,6 +988,7 @@ checksum = "9a3a5bfb195931eeb336b2a7b4d761daec841b97f947d34394601737a7bba5e4"
 [[package]]
 name = "hyper"
 version = "0.14.20"
+source = "git+https://github.com/4JX/hyper.git?branch=0.14.x-patched#78b4567c22c258bafe8f1a799b9aafb3f87073d6"
 dependencies = [
  "bytes",
  "futures-channel",
@@ -1619,6 +1624,7 @@ dependencies = [
 [[package]]
 name = "reqwest-impersonate"
 version = "0.11.11"
+source = "git+https://github.com/4JX/reqwest-impersonate?rev=83af401#83af401493fec500caf8589ebccf1529a524f4bd"
 dependencies = [
  "async-compression",
  "base64",
@@ -1891,9 +1897,9 @@ checksum = "2fd0db749597d91ff862fd1d55ea87f7855a744a8425a64695b6fca237d1dad1"
 
 [[package]]
 name = "socket2"
-version = "0.4.6"
+version = "0.4.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "10c98bba371b9b22a71a9414e420f92ddeb2369239af08200816169d5e2dd7aa"
+checksum = "02e2d2db9033d13a1567121ddd7a095ee144db4e1ca1b1bda3419bc0da294ebd"
 dependencies = [
  "libc",
  "winapi",
@@ -1975,18 +1981,18 @@ dependencies = [
 
 [[package]]
 name = "thiserror"
-version = "1.0.32"
+version = "1.0.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f5f6586b7f764adc0231f4c79be7b920e766bb2f3e51b3661cdb263828f19994"
+checksum = "3d0a539a918745651435ac7db7a18761589a94cd7e94cd56999f828bf73c8a57"
 dependencies = [
  "thiserror-impl",
 ]
 
 [[package]]
 name = "thiserror-impl"
-version = "1.0.32"
+version = "1.0.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "12bafc5b54507e0149cdf1b145a5d80ab80a90bcd9275df43d4fff68460f6c21"
+checksum = "c251e90f708e16c49a16f4917dc2131e75222b72edfa9cb7f7c58ae56aae0c09"
 dependencies = [
  "proc-macro2",
  "quote",

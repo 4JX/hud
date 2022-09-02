@@ -19,13 +19,20 @@ tokio = { version = "1.20.1", features = [
     "signal",
 ] }
 
-reqwest-impersonate = { path = "../reqwest", default-features = false, features = [
+# reqwest-impersonate = { path = "../reqwest", default-features = false, features = [
+#     "chrome",
+# ] }
+
+reqwest-impersonate = { git = "https://github.com/4JX/reqwest-impersonate", rev = "83af401",default-features = false, features = [
     "chrome",
 ] }
+
 base64 = "0.13.0"
 itertools = "0.10.3"
 # cached = "0.38.0"
-cached = { path = "../cached" }
+# cached = { path = "../cached" }
+# Waiting on https://github.com/jaemk/cached/pull/129
+cached = {git = "https://github.com/4JX/cached",rev ="87ad459"}
 thiserror = "1.0.32"
 serde = { version = "1.0.144", features = ["derive"] }
 serde_json = "1.0.85"
@@ -37,7 +44,7 @@ hex = "0.4.3"
 
 
 [patch.crates-io]
-# hyper = { git = "https://github.com/4JX/hyper.git", branch = "0.14.x-patched", ref = "78b4567" }
-hyper = { path = "../hyper" }
-# h2 = { git = "https://github.com/4JX/h2.git", branch = "test", ref = "75f2434" }
-h2 = { path = "../h2" }
+hyper = { git = "https://github.com/4JX/hyper.git", branch = "0.14.x-patched", ref = "78b4567" }
+# hyper = { path = "../hyper" }
+h2 = { git = "https://github.com/4JX/h2.git", branch = "test", ref = "b088466" }
+# h2 = { path = "../h2" }
