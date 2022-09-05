@@ -7,7 +7,10 @@ use hudsucker::{
     HttpContext, HttpHandler, RequestOrResponse,
 };
 use log::{trace, warn};
-use reqwest_impersonate::{header::HOST, Method};
+use reqwest_impersonate::{
+    header::{ACCEPT, ACCEPT_ENCODING, HOST},
+    Method,
+};
 
 use crate::{
     auth::handle_auth,
@@ -68,8 +71,10 @@ impl HttpHandler for ProxyHandler {
 
             let mut reqwest_req: reqwest_impersonate::Request = req.try_into().unwrap();
 
-            // Remove redundant HOST header to keep the fingerprint in check
+            // Remove redundant headers to keep the fingerprint in check
             reqwest_req.headers_mut().remove(HOST);
+            reqwest_req.headers_mut().remove(ACCEPT);
+            reqwest_req.headers_mut().remove(ACCEPT_ENCODING);
 
             let mut storage = self.client_storage.lock().await;
 
