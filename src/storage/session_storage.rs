@@ -3,6 +3,7 @@ use std::time::Duration;
 use super::{ConnectionHash, Storage};
 use crate::auth::Session;
 
+pub const SESSION_TIME: Duration = Duration::from_secs(5 * 60);
 #[allow(dead_code)]
 #[derive(Clone)]
 pub struct SessionStorage {
@@ -23,8 +24,8 @@ impl SessionStorage {
         conn_hash: ConnectionHash,
         session: Session,
     ) -> Option<Session> {
-        let dur = Duration::from_secs(session.session_time());
-        self.inner.set_with_duration(conn_hash, session, dur)
+        self.inner
+            .set_with_duration(conn_hash, session, SESSION_TIME)
     }
 
     /// Get a [`Session`] for the given [`ConnectionHash`]

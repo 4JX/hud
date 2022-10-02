@@ -8,7 +8,6 @@ mod ca;
 mod convert;
 mod proxy;
 mod response;
-mod route;
 mod storage;
 
 const RUST_LOG: &str = "RUST_LOG";

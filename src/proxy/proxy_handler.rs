@@ -16,7 +16,6 @@ use crate::{
     auth::handle_auth,
     convert::response_reqwest_to_hud,
     response,
-    route::get_route_type,
     storage::{ClientHash, ClientStorage, ConnectionHash, SessionStorage},
 };
 
@@ -66,8 +65,7 @@ impl HttpHandler for ProxyHandler {
                 }
             }
         } else if let Some(session) = self.session_storage.lock().await.get_session(&conn_hash) {
-            let route_type = get_route_type(session);
-            let client_hash = ClientHash::new(&conn_hash, session, &route_type);
+            let client_hash = ClientHash::new(&conn_hash, session);
 
             let mut reqwest_req: reqwest_impersonate::Request = req.try_into().unwrap();
 
@@ -78,7 +76,7 @@ impl HttpHandler for ProxyHandler {
 
             let mut storage = self.client_storage.lock().await;
 
-            let client = storage.acquire_client(client_hash, session);
+            let client = storage.acquire_client(client_hash);
 
             match client.execute(reqwest_req).await {
                 Ok(res) => {
@@ -86,9 +84,7 @@ impl HttpHandler for ProxyHandler {
 
                     RequestOrResponse::Response(http_res)
                 }
-                Err(_) => {
-                    return RequestOrResponse::Response(response::internal_server_error());
-                }
+                Err(_) => RequestOrResponse::Response(response::internal_server_error()),
             }
         } else {
             // There is no currently active session for the given ConnectionHash
